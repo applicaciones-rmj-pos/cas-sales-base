@@ -8,29 +8,30 @@ import org.rmj.appdriver.agentfx.StringHelper;
 import org.rmj.replication.utility.MiscReplUtil;
 
 public class Invoice_Cancel {
+
     private final String DIR = System.getProperty("pos.clt.dir.ejournal");
     private final String DIR_BAK = System.getProperty("pos.clt.dir.ejournal.bak");
-    
+
     StringBuilder builder;
     String sMessage;
-    
+
     JSONObject oJSON;
     JSONObject oHeader;
     JSONObject oMaster;
     JSONArray oDetail;
     JSONObject oPaymnt;
     JSONObject oFooter;
-    
-    public Invoice_Cancel(JSONObject foJSON){
+
+    public Invoice_Cancel(JSONObject foJSON) {
         oJSON = foJSON;
-    }    
-    
-    public boolean Print(){
-        if (oJSON == null){
+    }
+
+    public boolean Print() {
+        if (oJSON == null) {
             setMessage("JSON object for printing is not set.");
             return false;
         }
-        
+
         try {
             oHeader = (JSONObject) oJSON.get("Header");
             oMaster = (JSONObject) oJSON.get("Master");
@@ -42,219 +43,233 @@ public class Invoice_Cancel {
             setMessage(e.getMessage());
             return false;
         }
-                
+
         builder = new StringBuilder();
-        
-        if (!printHeader()) return false;
-        
-        if (!printDetail()) return false;
-        
-        if (!printFooter()) return false;
-        
+
+        if (!printHeader()) {
+            return false;
+        }
+
+        if (!printDetail()) {
+            return false;
+        }
+
+        if (!printFooter()) {
+            return false;
+        }
+
         //save in text file
-        
-        File f = new File(DIR + (String) oHeader.get("sMINumber")+  " " + System.getProperty("pos.clt.date") + ".txt");
-        
-        if(f.exists() && !f.isDirectory()) { 
+        File f = new File(DIR + (String) oHeader.get("sMINumber") + " " + System.getProperty("pos.clt.date") + ".txt");
+
+        if (f.exists() && !f.isDirectory()) {
             builder.append("\n").append(StringHelper.midpad("", CharSize.REGULAR, '-')).append("\n");
-            
-            if (!((String) oHeader.get("cReprintx")).equals("1")){
-                MiscReplUtil.fileWrite(DIR + (String) oHeader.get("sMINumber") +  " " + System.getProperty("pos.clt.date") +".txt", builder.toString(), true);
-                MiscReplUtil.fileWrite(DIR_BAK + (String) oHeader.get("sMINumber") +  " " + System.getProperty("pos.clt.date") +".txt", builder.toString(), true);
+
+            if (!((String) oHeader.get("cReprintx")).equals("1")) {
+                MiscReplUtil.fileWrite(DIR + (String) oHeader.get("sMINumber") + " " + System.getProperty("pos.clt.date") + ".txt", builder.toString(), true);
+                MiscReplUtil.fileWrite(DIR_BAK + (String) oHeader.get("sMINumber") + " " + System.getProperty("pos.clt.date") + ".txt", builder.toString(), true);
             }
         } else {
-            if (!((String) oHeader.get("cReprintx")).equals("1")){
-                MiscReplUtil.fileWrite(DIR + (String) oHeader.get("sMINumber") +  " " + System.getProperty("pos.clt.date") +".txt", builder.toString());
-                MiscReplUtil.fileWrite(DIR_BAK + (String) oHeader.get("sMINumber") +  " " + System.getProperty("pos.clt.date") +".txt", builder.toString());
+            if (!((String) oHeader.get("cReprintx")).equals("1")) {
+                MiscReplUtil.fileWrite(DIR + (String) oHeader.get("sMINumber") + " " + System.getProperty("pos.clt.date") + ".txt", builder.toString());
+                MiscReplUtil.fileWrite(DIR_BAK + (String) oHeader.get("sMINumber") + " " + System.getProperty("pos.clt.date") + ".txt", builder.toString());
             }
         }
-        
+
         return true;
     }
-    
-    private boolean printDetail(){
+
+    private boolean printDetail() {
         try {
             double nTranTotl = Double.parseDouble(String.valueOf(oMaster.get("nTranTotl"))); //(double) oMaster.get("nTranTotl");
             double nDiscRate = Double.parseDouble(String.valueOf(oMaster.get("nDiscount"))); //(double) oMaster.get("nDiscount");
             double nAddDiscx = Double.parseDouble(String.valueOf(oMaster.get("nAddDiscx"))); //(double) oMaster.get("nAddDiscx");
             double nVATRatex = Double.parseDouble(String.valueOf(oMaster.get("nVATRatex"))); //(double) oMaster.get("nVATRatex");
             double nFreightx = Double.parseDouble(String.valueOf(oMaster.get("nFreightx"))); //(double) oMaster.get("nFreightx");
-            
+
             //add freight charge to transaction total
             nTranTotl += nFreightx;
-            
-            builder.append(StringHelper.midpad("RETURN", CharSize.REGULAR));
-            
-            if (!"a".equalsIgnoreCase((String) oHeader.get("cTranMode")))
-                builder.append("\n").append(StringHelper.midpad("TRAINING MODE", CharSize.REGULAR)).append("\n");
 
-            if ("1".equals((String) oHeader.get("cReprintx")))
+              if (!"a".equalsIgnoreCase((String) oHeader.get("cTranMode"))) {
+                builder.append("\n").append(StringHelper.midpad("TRAINING MODE", CharSize.REGULAR)).append("\n");
+            }
+            if ("1".equals((String) oHeader.get("cReprintx"))) {
                 builder.append("\n").append(StringHelper.midpad("REPRINT", CharSize.REGULAR)).append("\n");
+            }
+            builder.append(StringHelper.midpad("CANCEL INVOICE", CharSize.REGULAR));
 
             builder.append("\n\n");
-            
+
             builder.append(" Cashier: ").append(StringHelper.postpad((String) oMaster.get("sCashierx"), 30, ' ')).append("\n");
-            
-            builder.append(" Terminal No.: ").append(StringHelper.postpad((String) oMaster.get("sTerminal"), 25, ' ')).append("\n");            
-            
-            if ("or".equalsIgnoreCase((String) oHeader.get("sSlipType")))
+
+            builder.append(" Terminal No.: ").append(StringHelper.postpad((String) oMaster.get("sTerminal"), 25, ' ')).append("\n");
+
+            if ("or".equalsIgnoreCase((String) oHeader.get("sSlipType"))) {
                 builder.append(" Reference OR No.: ").append(StringHelper.postpad((String) oMaster.get("sInvoicex"), 23, ' ')).append("\n");
-            else 
+            } else {
                 builder.append(" Reference SI No.: ").append(StringHelper.postpad((String) oMaster.get("sInvoicex"), 23, ' ')).append("\n");
-            
+            }
+
             builder.append(" Transaction No.: ").append(StringHelper.postpad((String) oMaster.get("sTransNox"), 22, ' ')).append("\n");
-            
+            builder.append(" Source No.: ").append(StringHelper.postpad((String) oMaster.get("sSourceNo"), 22, ' ')).append("\n");
+
             builder.append(" Date/Time: ").append(StringHelper.postpad((String) oMaster.get("sDateTime"), 31, ' ')).append("\n\n");
-            
+            if ("1".equals((String) oHeader.get("cReprintx"))) {
+                builder.append(" REPRINT Date/Time: ").append(StringHelper.postpad((String) oMaster.get("dtReprint"), 31, ' ')).append("\n");
+
+            }
             builder.append(StringHelper.midpad("", CharSize.REGULAR, '*')).append("\n");
-            
+
             //print detail header
             builder.append("QTY").append(" ")
                     .append(StringHelper.postpad("DESCRIPTION", CharSize.DSCLEN, ' '))
                     .append(StringHelper.prepad("UPRICE", CharSize.PRCLEN, ' '))
                     .append(StringHelper.prepad("AMOUNT", CharSize.TTLLEN, ' '))
                     .append("\n");
-            
+
             double total;
             double nonvat = 0.00;
             int itemctr = 0;
             int nonvatctr = 0;
-            
+
             //print detail
-            for(Object item: oDetail){
+            for (Object item : oDetail) {
                 JSONObject loItem = (JSONObject) item;
-                
+
                 total = (int) loItem.get("nQuantity") * Double.parseDouble((String.valueOf(loItem.get("nAmountxx"))));
-                
+
                 builder.append(StringHelper.prepad(String.valueOf(loItem.get("nQuantity")), CharSize.QTYLEN, ' ')).append(" ")
                         .append(StringHelper.postpad(String.valueOf(loItem.get("sBarCodex")), CharSize.DSCLEN, ' '))
                         .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(Double.parseDouble((String.valueOf(loItem.get("nAmountxx")))), "##0.00")), CharSize.PRCLEN, ' '))
                         .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(total, "##0.00")), CharSize.TTLLEN, ' '));
-                
-                if ("1".equals((String) loItem.get("cVatablex")))
+
+                if ("1".equals((String) loItem.get("cVatablex"))) {
                     builder.append("V");
-                else{
+                } else {
                     nonvat += total;
                     nonvatctr += (int) loItem.get("nQuantity");
                 }
-                    
+
                 builder.append("\n");
-                
+
                 //indented description
                 builder.append("    ").append(String.valueOf(loItem.get("sDescript")).toUpperCase()).append("\n");
-                
+
                 //if item was serialized
-                if("1".equals((String) loItem.get("cSerialze"))){
-                    if (!"".equals((String) loItem.get("xDescript")))
+                if ("1".equals((String) loItem.get("cSerialze"))) {
+                    if (!"".equals((String) loItem.get("xDescript"))) {
                         builder.append(StringHelper.postpad("     " + (String) loItem.get("xDescript"), CharSize.REGULAR)).append("\n");
-                    
-                    if (!"".equals((String) loItem.get("sSerial01")))
-                        builder.append(StringHelper.postpad("     " + "SN: "+ (String) loItem.get("sSerial01"), CharSize.REGULAR)).append("\n");
-                    
-                    if (!"".equals((String) loItem.get("sSerial02")))
-                        builder.append(StringHelper.postpad("     " + "SN: "+ (String) loItem.get("sSerial02"), CharSize.REGULAR)).append("\n");
-                }
-                
-                double detdisc = (-1 * total * Double.parseDouble(String.valueOf(loItem.get("nDiscount")))) + Double.parseDouble(String.valueOf(loItem.get("nAddDiscx")));
-                
-                if (detdisc > 0.00){
-                    if (!((String) loItem.get("sPromoDsc")).isEmpty()){
-                        builder.append(StringHelper.postpad("     " + ((String) loItem.get("sPromoDsc")).toUpperCase(), CharSize.REGULAR)).append("\n");
-                    }
-                    
-                    if (Double.parseDouble(String.valueOf(loItem.get("nDiscount"))) > 0.00){
-                        builder.append(StringHelper.postpad("      (" + (Double.parseDouble(String.valueOf(loItem.get("nDiscount"))) * 100) + "%)", 24, ' '))
-                            .append(StringHelper.prepad(" " + String.valueOf(CommonUtils.NumberFormat(-1 * total * Double.parseDouble(String.valueOf(loItem.get("nDiscount"))), "##0.00")), CharSize.REGLEN, ' ')).append("\n");
                     }
 
-                    if (Double.parseDouble(String.valueOf(loItem.get("nAddDiscx"))) > 0.00){
-                        builder.append(StringHelper.postpad("      (P" + String.valueOf(loItem.get("nAddDiscx")) + ")", 24, ' '))
-                            .append(StringHelper.prepad(" " +String.valueOf(CommonUtils.NumberFormat(Double.parseDouble(String.valueOf(loItem.get("nAddDiscx"))), "##0.00")), CharSize.REGLEN, ' ')).append("\n");
+                    if (!"".equals((String) loItem.get("sSerial01"))) {
+                        builder.append(StringHelper.postpad("     " + "SN: " + (String) loItem.get("sSerial01"), CharSize.REGULAR)).append("\n");
+                    }
+
+                    if (!"".equals((String) loItem.get("sSerial02"))) {
+                        builder.append(StringHelper.postpad("     " + "SN: " + (String) loItem.get("sSerial02"), CharSize.REGULAR)).append("\n");
                     }
                 }
-                
+
+                double detdisc = (-1 * total * Double.parseDouble(String.valueOf(loItem.get("nDiscount")))) + Double.parseDouble(String.valueOf(loItem.get("nAddDiscx")));
+
+                if (detdisc > 0.00) {
+                    if (!((String) loItem.get("sPromoDsc")).isEmpty()) {
+                        builder.append(StringHelper.postpad("     " + ((String) loItem.get("sPromoDsc")).toUpperCase(), CharSize.REGULAR)).append("\n");
+                    }
+
+                    if (Double.parseDouble(String.valueOf(loItem.get("nDiscount"))) > 0.00) {
+                        builder.append(StringHelper.postpad("      (" + (Double.parseDouble(String.valueOf(loItem.get("nDiscount"))) * 100) + "%)", 24, ' '))
+                                .append(StringHelper.prepad(" " + String.valueOf(CommonUtils.NumberFormat(-1 * total * Double.parseDouble(String.valueOf(loItem.get("nDiscount"))), "##0.00")), CharSize.REGLEN, ' ')).append("\n");
+                    }
+
+                    if (Double.parseDouble(String.valueOf(loItem.get("nAddDiscx"))) > 0.00) {
+                        builder.append(StringHelper.postpad("      (P" + String.valueOf(loItem.get("nAddDiscx")) + ")", 24, ' '))
+                                .append(StringHelper.prepad(" " + String.valueOf(CommonUtils.NumberFormat(Double.parseDouble(String.valueOf(loItem.get("nAddDiscx"))), "##0.00")), CharSize.REGLEN, ' ')).append("\n");
+                    }
+                }
+
                 itemctr += (int) loItem.get("nQuantity");
             }
-            
-            if (nFreightx > 0.00){
+
+            if (nFreightx > 0.00) {
                 builder.append("\n");
                 builder.append(StringHelper.prepad(" ", CharSize.QTYLEN, ' '))
                         .append(StringHelper.postpad("FREIGHT CHARGE", CharSize.DSCLEN, ' '))
                         .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nFreightx, "##0.00")), CharSize.PRCLEN, ' '))
                         .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nFreightx, "##0.00")), CharSize.TTLLEN, ' ')).append("\n");
             }
-            
-      
+
             builder.append(StringHelper.midpad("", CharSize.REGULAR, '-')).append("\n");
-            
+
             builder.append(" No. of Items: ").append(itemctr).append("\n").append("\n");
-            
+
             builder.append(StringHelper.postpad(" Gross Sales", 25, ' ')).append(" ")
                     .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nTranTotl, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
-            
+
             double discount = 0.00;
-            
-            if (nDiscRate + nAddDiscx > 0.00) discount = nTranTotl * nDiscRate - nAddDiscx;
-            
-            if (discount < 0.00){                
-                if (!((String) oMaster.get("sPromoDsc")).isEmpty()){
+
+            if (nDiscRate + nAddDiscx > 0.00) {
+                discount = nTranTotl * nDiscRate - nAddDiscx;
+            }
+
+            if (discount < 0.00) {
+                if (!((String) oMaster.get("sPromoDsc")).isEmpty()) {
                     builder.append(StringHelper.postpad(" Less: " + ((String) oMaster.get("sPromoDsc")).toUpperCase(), CharSize.REGULAR)).append("\n");
                 }
 
-                if (nDiscRate > 0.00){
+                if (nDiscRate > 0.00) {
                     builder.append(StringHelper.postpad("        (" + (nDiscRate * 100) + "%)", 26, ' '))
-                        .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nTranTotl * nDiscRate, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
+                            .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nTranTotl * nDiscRate, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
                 }
 
-                if (nAddDiscx > 0.00){
+                if (nAddDiscx > 0.00) {
                     builder.append(StringHelper.postpad("        (P" + String.valueOf(nAddDiscx) + ")", 26, ' '))
-                        .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nAddDiscx * -1, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
+                            .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nAddDiscx * -1, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
                 }
-            }           
-            
+            }
+
             //small separator
             builder.append(StringHelper.postpad(" ", 25, ' ')).append(" ")
                     .append(StringHelper.prepad("-", CharSize.REGLEN, '-')).append("\n");
-            
+
             builder.append(StringHelper.postpad(" VATable Sales", 25, ' ')).append(" ")
                     .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nTranTotl - discount, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
-            
+
             //small separator
             builder.append(StringHelper.postpad(" ", 25, ' ')).append(" ")
                     .append(StringHelper.prepad("-", CharSize.REGLEN, '-')).append("\n");;
-            
+
             double netWOVAT = (nTranTotl - discount) / nVATRatex;
             builder.append(StringHelper.postpad(" Net VATable Sales", 25, ' ')).append(" ")
                     .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(netWOVAT, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
-            
+
             double addVATxx = netWOVAT * (nVATRatex - 1);
             builder.append(StringHelper.postpad(" Add: VAT", 25, ' ')).append(" ")
                     .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(addVATxx, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
-            
+
             //small separator
             builder.append(StringHelper.postpad(" ", 25, ' ')).append(" ")
                     .append(StringHelper.prepad("-", CharSize.REGLEN, '-')).append("\n");;
-            
+
             double nettotal = netWOVAT + addVATxx;
             builder.append(StringHelper.postpad(" TOTAL AMOUNT DUE :", 25, ' ')).append(" ")
                     .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nettotal, "##0.00")), CharSize.REGLEN, ' ')).append("\n").append("\n");
-            
+
             builder.append(StringHelper.midpad("", CharSize.REGULAR, '-')).append("\n").append("\n");
-            
+
             builder.append(StringHelper.postpad(" VAT Exempt Sales      ", 25, ' ')).append(" ")
-                        .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nonvat, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
-            
+                    .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(nonvat, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
+
             builder.append(StringHelper.postpad(" Zero-Rated Sales      ", 25, ' ')).append(" ")
-                        .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(0.00, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
-            
+                    .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(0.00, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
+
             builder.append(StringHelper.postpad(" VATable Sales         ", 25, ' ')).append(" ")
-                        .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(netWOVAT, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
-            
+                    .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(netWOVAT, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
+
             builder.append(StringHelper.postpad(" VAT Amount            ", 25, ' ')).append(" ")
-                        .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(addVATxx, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
-            
+                    .append(StringHelper.prepad(String.valueOf(CommonUtils.NumberFormat(addVATxx, "##0.00")), CharSize.REGLEN, ' ')).append("\n");
+
             builder.append("\n");
-            
+
             builder.append(" Cust Name: ").append(StringHelper.postpad((String) oMaster.get("sClientNm"), 28, ' ')).append("\n");
             builder.append(" Address: ").append(StringHelper.postpad((String) oMaster.get("sAddressx"), 30, ' ')).append("\n");
             builder.append(" TIN: ").append(StringHelper.postpad((String) oMaster.get("sTINumber"), 34, ' ')).append("\n");
@@ -264,11 +279,11 @@ public class Invoice_Cancel {
             setMessage(e.getMessage());
             return false;
         }
-        
+
         return true;
     }
-    
-    private boolean printHeader(){
+
+    private boolean printHeader() {
         try {
             String sCompnyNm = (String) oHeader.get("sCompnyNm");
             String sBranchNm = (String) oHeader.get("sBranchNm");
@@ -292,14 +307,15 @@ public class Invoice_Cancel {
             setMessage(e.getMessage());
             return false;
         }
-        
+
         return true;
     }
-    
-    private boolean printFooter(){
+
+    private boolean printFooter() {
         try {
             String sSlipType = (String) oHeader.get("sSlipType");
             String sDevelopr = (String) oFooter.get("sDevelopr");
+            String sOwnerNme = (String) oFooter.get("sOwnerNme");
             String sAddress1 = (String) oFooter.get("sAddress1");
             String sAddress2 = (String) oFooter.get("sAddress2");
             String sVATREGTN = (String) oFooter.get("sVATREGTN");
@@ -309,31 +325,34 @@ public class Invoice_Cancel {
             String sPTUNmber = (String) oFooter.get("sPTUNmber");
             String sPTUIssdx = (String) oFooter.get("sPTUIssdx");
             String sPTUExpry = (String) oFooter.get("sPTUExpry");
-            
+
             builder.append(StringHelper.midpad("", CharSize.REGULAR, '*')).append("\n").append("\n");
-            
-            builder.append(StringHelper.midpad("Thank you, and please come again.", CharSize.REGULAR));
-            
+
+            builder.append(StringHelper.midpad("THIS DOCUMENT IS NOT VALID FOR CLAIM OF INPUT TAX.", CharSize.REGULAR));
             builder.append("\n").append("\n");
-            
+            builder.append(StringHelper.midpad("Thank you, and please come again.", CharSize.REGULAR));
+
+            builder.append("\n").append("\n");
+
             builder.append(StringHelper.midpad(sDevelopr, CharSize.REGULAR)).append("\n");
+
+            builder.append(StringHelper.midpad("OWNED BY " + sOwnerNme, CharSize.REGULAR)).append("\n");
             
             builder.append(StringHelper.midpad(sAddress1, CharSize.REGULAR)).append("\n");
-            
+
             builder.append(StringHelper.midpad(sAddress2, CharSize.REGULAR)).append("\n");
-            
+
             builder.append(StringHelper.midpad("VAT REG TIN: " + sVATREGTN, CharSize.REGULAR)).append("\n");
-            
+
             builder.append(StringHelper.midpad("ACCR NO.: " + sAccrNmbr, CharSize.REGULAR)).append("\n");
-            
+
             builder.append(StringHelper.midpad("Date Issued: " + sAccrIssd, CharSize.REGULAR)).append("\n");
-            
+
             builder.append(StringHelper.midpad("Valid Until: " + sAccdExpr, CharSize.REGULAR)).append("\n");
-            
+
             builder.append(StringHelper.midpad("PTU NO.: " + sPTUNmber, CharSize.REGULAR)).append("\n");
-            
+
 //            builder.append(StringHelper.midpad("Date Issued: " + sPTUIssdx, CharSize.REGULAR)).append("\n");
-            
 //            builder.append(StringHelper.midpad("Valid Until: " + sPTUExpry, CharSize.REGULAR)).append("\n").append("\n");
 //            
 //            if ("or".equalsIgnoreCase(sSlipType))
@@ -345,22 +364,21 @@ public class Invoice_Cancel {
 //            builder.append(StringHelper.midpad("FOR FIVE(5) YEARS FROM THE DATE OF", CharSize.REGULAR));
 //            builder.append("\n");
 //            builder.append(StringHelper.midpad("THE PERMT TO USE.", CharSize.REGULAR)).append("\n");
-            
-            builder.append(StringHelper.midpad("----- END OF RECEIPT -----", CharSize.REGULAR)).append("\n");
+            builder.append(StringHelper.midpad("----- END OF INVOICE -----", CharSize.REGULAR)).append("\n");
         } catch (Exception e) {
             e.printStackTrace();
             setMessage(e.getMessage());
             return false;
         }
-        
+
         return true;
     }
-    
-    
-    public String getMessage(){
+
+    public String getMessage() {
         return sMessage;
     }
-    private void setMessage(String fsValue){
+
+    private void setMessage(String fsValue) {
         sMessage = fsValue;
     }
 }
