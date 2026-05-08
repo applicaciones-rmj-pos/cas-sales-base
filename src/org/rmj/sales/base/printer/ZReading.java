@@ -129,8 +129,8 @@ public class ZReading {
             builder.append(StringHelper.postpad("", 25)).append(" ").append(StringHelper.prepad("-", CharSize.REGLEN, '-')).append("\n");
 
             builder.append(StringHelper.postpad(" NET SALES", 25)).append(" ")
-                    .append(StringHelper.prepad(CommonUtils.NumberFormat(Double.parseDouble(String.valueOf(oDetail.get("nSalesAmt")))
-                            , "##0.00"), CharSize.REGLEN)).append("\n\n");
+                    .append(StringHelper.prepad(CommonUtils.NumberFormat(Double.parseDouble(String.valueOf(oDetail.get("nSalesAmt"))),
+                             "##0.00"), CharSize.REGLEN)).append("\n\n");
 
             builder.append(StringHelper.postpad(" VATable Sales", 25)).append(" ")
                     .append(StringHelper.prepad(CommonUtils.NumberFormat(Double.parseDouble(String.valueOf(oDetail.get("nVATSales"))), "##0.00"), CharSize.REGLEN)).append("\n");
@@ -190,6 +190,11 @@ public class ZReading {
 
             builder.append(StringHelper.postpad("         Z COUNTER: ", 25)).append(" ")
                     .append(StringHelper.prepad(String.valueOf(oDetail.get("nZCounter")), CharSize.REGLEN)).append("\n");
+
+            if (Integer.parseInt(oDetail.get("nResetCtr").toString()) > 0) {
+                builder.append(StringHelper.postpad("         RESET COUNTER: ", 25)).append(" ")
+                        .append(StringHelper.prepad(String.valueOf(oDetail.get("nResetCtr")), CharSize.REGLEN)).append("\n");
+            }
 
             builder.append(StringHelper.postpad("  ACC. GRAND TOTAL: ", 25)).append(" ")
                     .append(StringHelper.prepad(CommonUtils.NumberFormat(Double.parseDouble(String.valueOf(oDetail.get("nPrevSale"))) + lnSales, "##0.00"), CharSize.REGLEN)).append("\n");
